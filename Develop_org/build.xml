@@ -1,0 +1,91 @@
+<project name="Sample usage of Salesforce Ant tasks" default="test" basedir="." xmlns:sf="antlib:com.salesforce">
+
+    <property file="build.properties"/>
+    <property environment="env"/>
+
+    <!-- Setting default value for username, password and session id properties to empty string 
+         so unset values are treated as empty. Without this, ant expressions such as ${sf.username}
+         will be treated literally.
+    -->
+    <condition property="sf1.username" value=""> <not> <isset property="sf.username"/> </not> </condition>
+    <condition property="sf1.password" value=""> <not> <isset property="sf.password"/> </not> </condition>
+    <condition property="sf1.sessionId" value=""> <not> <isset property="sf.sessionId"/> </not> </condition>
+	
+	
+	   <condition property="sf2.username" value=""> <not> <isset property="sf.username"/> </not> </condition>
+    <condition property="sf2.password" value=""> <not> <isset property="sf.password"/> </not> </condition>
+    <condition property="sf2.sessionId" value=""> <not> <isset property="sf.sessionId"/> </not> </condition>
+
+    <taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
+        <classpath>
+            <pathelement location="../ant-salesforce.jar" />        	
+        </classpath>
+    </taskdef>
+	
+   
+
+    <!-- Retrieve an unpackaged set of metadata from your org -->
+    <!-- The file unpackaged/package.xml lists what is to be retrieved -->
+    <target name="retrieveUnpackaged">
+      <mkdir dir="retrieveUnpackaged"/>
+      <!-- Retrieve the contents into another directory -->
+      <sf:retrieve username="${sf1.username}" 
+	  password="${sf1.password}"
+	  sessionId="${sf1.sessionId}" 
+	  serverurl="${sf.serverurl}"
+	  maxPoll="${sf.maxPoll}" 
+	  retrieveTarget="retrieveUnpackaged" 
+	  unpackaged="unpackaged/package.xml"/>
+    </target>
+
+    
+
+   
+    <!-- Deploy the unpackaged set of metadata retrieved with retrieveUnpackaged and run tests in this organization's namespace only-->
+    <target name="deployUnpackaged">
+      <sf:deploy username="${sf2.username}"
+	  password="${sf2.password}"
+	  sessionId="${sf2.sessionId}"
+	  serverurl="${sf.serverurl}" 
+	  maxPoll="${sf.maxPoll}" 
+	  deployRoot="retrieveUnpackaged"
+	  rollbackOnError="true"/>
+    </target>
+
+   
+    <!-- Shows deploying code & running tests for code in directory -->
+    <target name="deployCode">
+      <!-- Upload the contents of the "codepkg" directory, running the tests for just 1 class -->
+      <sf:deploy username="${sf2.username}"
+	  password="${sf2.password}"
+	  sessionId="${sf2.sessionId}" 
+	  serverurl="${sf.serverurl}" 
+	  maxPoll="${sf.maxPoll}" 
+	  deployRoot="codepkg" 
+	  testLevel="RunSpecifiedTests" 
+	  rollbackOnError="true">
+      	 <runTest>SampleDeployClass</runTest> 
+      </sf:deploy>
+    </target>
+	
+
+ 
+    <!-- Shows retrieving code; only succeeds if done after deployCode -->
+    <target name="retrieveCode">
+      <!-- Retrieve the contents listed in the file codepkg/package.xml into the codepkg directory -->
+      <sf:retrieve username="${sf1.username}" 
+	  password="${sf1.password}" 
+	  sessionId="${sf1.sessionId}" 
+	  serverurl="${sf.serverurl}" 
+	  maxPoll="${sf.maxPoll}" 
+	  retrieveTarget="codepkg" 
+	  unpackaged="codepkg/package.xml"/>
+    </target>
+
+
+    
+	
+
+	
+	
+</project>
